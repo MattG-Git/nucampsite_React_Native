@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Text, View, ScrollView, StyleSheet,Picker, Switch, Button, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Animatable from 'react-native-animatable';
+import * as Notifications from 'expo-notifications';
 
 class Reservation extends Component {
     constructor(props) {
@@ -23,6 +24,31 @@ class Reservation extends Component {
             date: new Date(),
             showCalendar: false,
         });
+    }
+    async presentLocalNotification(date) {
+        function sendNotification() {
+            Notifications.setNotificationHandler({
+                handleNotification: async () => ({
+                    shouldShowAlert: true
+                })
+            });
+
+            Notifications.scheduleNotificationAsync({
+                content: {
+                    title: 'Your Campsite Reservation Search',
+                    body: `Search for ${date} requested`
+                },
+                trigger: null
+            });
+        }
+
+        let permissions = await Notifications.getPermissionsAsync();
+        if (!permissions.granted) {
+            permissions = await Notifications.requestPermissionsAsync();
+        }
+        if (permissions.granted) {
+            sendNotification();
+        }
     }
     render() {
         return (
@@ -89,9 +115,12 @@ class Reservation extends Component {
                                             style: 'cancel'
                                         },
                                         {
-                                            text: 'OK',
-                                            onPress: () => { this.resetForm();
+                                            text: 'OK', 
+                                            onPress: () => {
+                                                this.presentLocalNotification(this.state.date.toLocaleDateString('en-US'));
+                                                this.resetForm();
                                             }
+                        
                                         }
                                     ],
                                     { cancelable: false }
